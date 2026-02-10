@@ -1050,7 +1050,7 @@ export class ConexiaTicketTemplate extends LitElement {
         </div>
         <div slot="footer" class="footer">
           <conexia-button ?disabled=${this.disabled} @click=${this.emitSubmit}>
-            Exportar JSON
+            Guardar
           </conexia-button>
         </div>
       </conexia-card>
