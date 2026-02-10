@@ -1,5 +1,5 @@
 import { css, html, LitElement } from "lit";
-import { customElement, property, query } from "lit/decorators.js";
+import { customElement, property, query, state } from "lit/decorators.js";
 
 export type ConexiaSelectSize = "sm" | "md" | "lg";
 
@@ -128,15 +128,26 @@ export class ConexiaSelect extends LitElement {
   @query("select")
   private selectElement!: HTMLSelectElement;
 
+  @query("slot:not([name])")
+  private optionsSlotElement!: HTMLSlotElement;
+
+  @state()
+  private optionItems: Array<{ value: string; label: string; disabled: boolean }> = [];
+
+  firstUpdated() {
+    if (this.optionsSlotElement) {
+      this.optionsSlotElement.addEventListener("slotchange", () => this.updateOptionItems());
+    }
+    this.updateOptionItems();
+  }
+
   updated(changed: Map<string, unknown>) {
     if (!this.selectElement) {
       return;
     }
 
     if (!this.multiple && changed.has("value")) {
-      if (this.selectElement.value !== this.value) {
-        this.selectElement.value = this.value;
-      }
+      this.syncValue();
     }
 
     if (this.multiple && changed.has("values")) {
@@ -145,6 +156,37 @@ export class ConexiaSelect extends LitElement {
         option.selected = valuesSet.has(option.value);
       });
     }
+  }
+
+  private syncValue() {
+    if (!this.selectElement) {
+      return;
+    }
+    const options = Array.from(this.selectElement.options || []);
+    const values = options.map((option) => option.value);
+    const nextValue = values.includes(this.value) ? this.value : values[0] ?? "";
+    if (nextValue && this.selectElement.value !== nextValue) {
+      this.selectElement.value = nextValue;
+    }
+    if (nextValue && this.value !== nextValue) {
+      this.value = nextValue;
+    }
+  }
+
+  private updateOptionItems() {
+    if (!this.optionsSlotElement) {
+      return;
+    }
+    const assigned = this.optionsSlotElement.assignedElements({ flatten: true });
+    const options = assigned.filter(
+      (node): node is HTMLOptionElement => node.tagName === "OPTION",
+    );
+    this.optionItems = options.map((option) => ({
+      value: option.value,
+      label: option.textContent?.trim() ?? "",
+      disabled: option.disabled,
+    }));
+    this.updateComplete.then(() => this.syncValue());
   }
 
   private handleChange(event: Event) {
@@ -178,6 +220,7 @@ export class ConexiaSelect extends LitElement {
               <slot name="label">${this.label}</slot>
             </label>`
           : null}
+        <slot hidden></slot>
         <div class="control">
           <select
             ?multiple=${this.multiple}
@@ -192,7 +235,19 @@ export class ConexiaSelect extends LitElement {
                   ${this.placeholder}
                 </option>`
               : null}
-            <slot></slot>
+            ${this.optionItems.map(
+              (option) => html`
+                <option
+                  value=${option.value}
+                  ?disabled=${option.disabled}
+                  ?selected=${this.multiple
+                    ? this.values.includes(option.value)
+                    : this.value === option.value}
+                >
+                  ${option.label}
+                </option>
+              `,
+            )}
           </select>
           ${this.multiple
             ? null

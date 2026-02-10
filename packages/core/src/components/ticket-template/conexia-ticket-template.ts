@@ -195,6 +195,10 @@ export class ConexiaTicketTemplate extends LitElement {
       align-items: center;
     }
 
+    .row.compact conexia-select {
+      min-width: 120px;
+    }
+
     .row > * {
       min-width: 0;
     }
@@ -228,6 +232,26 @@ export class ConexiaTicketTemplate extends LitElement {
     .muted {
       color: var(--cx-color-muted, #475569);
       font-size: 0.9rem;
+    }
+
+    .cut-label {
+      text-align: center;
+      font-weight: 600;
+      color: var(--cx-color-text, #0f172a);
+      background: var(--cx-color-secondary, #f8fafc);
+      border: 1px dashed var(--cx-color-border, #e2e8f0);
+      border-radius: 999px;
+      padding: 0.35rem 0.75rem;
+    }
+
+    .drawer-label {
+      text-align: center;
+      font-weight: 600;
+      color: var(--cx-color-text, #0f172a);
+      background: var(--cx-color-secondary, #f8fafc);
+      border: 1px dashed var(--cx-color-border, #e2e8f0);
+      border-radius: 999px;
+      padding: 0.35rem 0.75rem;
     }
 
     conexia-input,
@@ -272,12 +296,22 @@ export class ConexiaTicketTemplate extends LitElement {
   @state()
   private previewWidth = 80;
 
+  @state()
+  private shouldScrollToEnd = false;
+
   @query(".builder")
   private builderElement?: HTMLElement;
 
   updated(changed: Map<string, unknown>) {
     if (changed.has("value")) {
       this.blocks = this.normalizeValue(this.value);
+    }
+    if (this.shouldScrollToEnd) {
+      this.shouldScrollToEnd = false;
+      const builder = this.builderElement;
+      if (builder) {
+        builder.scrollTop = builder.scrollHeight;
+      }
     }
   }
 
@@ -427,7 +461,7 @@ export class ConexiaTicketTemplate extends LitElement {
       case "text":
         return {
           text: block.text,
-          align: block.align,
+          align: block.align ?? "center",
           bold: block.bold || undefined,
           size:
             block.sizeWidth !== null && block.sizeHeight !== null
@@ -458,21 +492,19 @@ export class ConexiaTicketTemplate extends LitElement {
   }
 
   private updateBlock(index: number, updated: BuilderBlock) {
-    this.blocks = this.blocks.map((block, i) =>
-      i === index ? updated : block,
-    );
-    this.emitChange();
+    this.preserveBuilderScroll(() => {
+      this.blocks = this.blocks.map((block, i) =>
+        i === index ? updated : block,
+      );
+      this.emitChange();
+    });
   }
 
   private addBlock(kind: BlockKind) {
     const newBlock = this.createBlockByKind(kind);
     this.blocks = [...this.blocks, newBlock];
+    this.shouldScrollToEnd = true;
     this.emitChange();
-    this.updateComplete.then(() => {
-      if (this.builderElement) {
-        this.builderElement.scrollTop = this.builderElement.scrollHeight;
-      }
-    });
   }
 
   private createBlockByKind(kind: BlockKind): BuilderBlock {
@@ -525,11 +557,13 @@ export class ConexiaTicketTemplate extends LitElement {
   }
 
   private removeBlock(index: number) {
-    this.blocks = this.blocks.filter((_, i) => i !== index);
-    if (this.blocks.length === 0) {
-      this.blocks = [this.createDefaultBlock()];
-    }
-    this.emitChange();
+    this.preserveBuilderScroll(() => {
+      this.blocks = this.blocks.filter((_, i) => i !== index);
+      if (this.blocks.length === 0) {
+        this.blocks = [this.createDefaultBlock()];
+      }
+      this.emitChange();
+    });
   }
 
   private moveBlock(index: number, direction: "up" | "down") {
@@ -537,16 +571,29 @@ export class ConexiaTicketTemplate extends LitElement {
     if (targetIndex < 0 || targetIndex >= this.blocks.length) {
       return;
     }
-    const updated = [...this.blocks];
-    const [moved] = updated.splice(index, 1);
-    updated.splice(targetIndex, 0, moved);
-    this.blocks = updated;
-    this.emitChange();
+    this.preserveBuilderScroll(() => {
+      const updated = [...this.blocks];
+      const [moved] = updated.splice(index, 1);
+      updated.splice(targetIndex, 0, moved);
+      this.blocks = updated;
+      this.emitChange();
+    });
   }
 
   private handleKindChange(index: number, kind: BlockKind) {
     const newBlock = this.createBlockByKind(kind);
     this.updateBlock(index, newBlock);
+  }
+
+  private preserveBuilderScroll(action: () => void) {
+    const builder = this.builderElement;
+    const scrollTop = builder?.scrollTop ?? 0;
+    action();
+    this.updateComplete.then(() => {
+      if (builder) {
+        builder.scrollTop = scrollTop;
+      }
+    });
   }
 
   private updateTableHeader(
@@ -936,7 +983,7 @@ export class ConexiaTicketTemplate extends LitElement {
                   }}
                 ></conexia-input>
                 ${this.renderAlignSelect(
-                  block.align,
+                  block.align ?? "center",
                   (align) => this.updateBlock(index, { ...block, align }),
                   "Alineacion",
                 )}
@@ -997,32 +1044,12 @@ export class ConexiaTicketTemplate extends LitElement {
           : nothing}
         ${block.kind === "cut"
           ? html`
-              <conexia-toggle
-                label="Cortar papel"
-                ?checked=${block.cut}
-                ?disabled=${this.disabled}
-                @change=${(event: Event) => {
-                  this.updateBlock(index, {
-                    ...block,
-                    cut: this.readChecked(event),
-                  });
-                }}
-              ></conexia-toggle>
+              <div class="cut-label">Cortar papel</div>
             `
           : nothing}
         ${block.kind === "openDrawer"
           ? html`
-              <conexia-toggle
-                label="Abrir caja"
-                ?checked=${block.openDrawer}
-                ?disabled=${this.disabled}
-                @change=${(event: Event) => {
-                  this.updateBlock(index, {
-                    ...block,
-                    openDrawer: this.readChecked(event),
-                  });
-                }}
-              ></conexia-toggle>
+              <div class="drawer-label">Abrir caja</div>
             `
           : nothing}
         ${block.kind === "charLine"

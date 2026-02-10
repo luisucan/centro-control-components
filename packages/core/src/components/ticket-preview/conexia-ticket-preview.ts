@@ -49,6 +49,9 @@ export class ConexiaTicketPreview extends LitElement {
 
     .text {
       white-space: pre-wrap;
+      width: 100%;
+      display: block;
+      justify-self: stretch;
     }
 
     .cut {
@@ -210,19 +213,12 @@ export class ConexiaTicketPreview extends LitElement {
       const sizeWidth = block.size?.width ?? 1;
       const fontSize = 0.85 * sizeHeight;
       const letterSpacing = sizeWidth > 1 ? 0.02 * sizeWidth : 0;
-      return html`
-        <div
-          class="text"
-          style="
-            text-align: ${block.align ?? "left"};
-            font-weight: ${block.bold ? "700" : "400"};
-            font-size: ${fontSize}rem;
-            letter-spacing: ${letterSpacing}em;
-          "
-        >
-          ${block.text}
-        </div>
-      `;
+      return html`<div
+        class="text"
+        style="text-align: ${block.align ?? "left"}; font-weight: ${
+          block.bold ? "700" : "400"
+        }; font-size: ${fontSize}rem; letter-spacing: ${letterSpacing}em;"
+      >${block.text}</div>`;
     }
 
     if ("cut" in block) {
