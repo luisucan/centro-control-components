@@ -1,0 +1,27 @@
+{
+  "name": "conexia-components",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ],
+  "scripts": {
+    "build": "npm run build -ws",
+    "dev": "npm run dev -ws",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "clean": "npm run clean -ws"
+  },
+  "devDependencies": {
+    "@storybook/addon-a11y": "^8.3.0",
+    "@storybook/addon-essentials": "^8.3.0",
+    "@storybook/addon-interactions": "^8.3.0",
+    "@storybook/web-components-vite": "^8.3.0",
+    "rimraf": "^5.0.0",
+    "storybook": "^8.3.0",
+    "typescript": "^5.4.0",
+    "vite": "^5.4.0",
+    "vite-plugin-dts": "^3.9.0"
+  }
+}

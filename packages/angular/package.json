@@ -1,0 +1,37 @@
+{
+  "name": "@conexia/angular",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Angular wrappers for Conexia Web Components",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@conexia/core": "0.1.0"
+  },
+  "peerDependencies": {
+    "@angular/common": "^17.0.0",
+    "@angular/core": "^17.0.0"
+  },
+  "devDependencies": {
+    "@angular/common": "^17.0.0",
+    "@angular/core": "^17.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
