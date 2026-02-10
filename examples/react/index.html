@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Conexia React Example</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem;
+        font-family: "Source Sans 3", Arial, sans-serif;
+        background: #f8fafc;
+      }
+
+      #root {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      import React, { useMemo } from "https://esm.sh/react@18";
+      import { createRoot } from "https://esm.sh/react-dom@18/client";
+      import {
+        ConexiaTicketTemplate,
+        defineConexiaComponents
+      } from "https://esm.sh/@conexia/react@latest";
+
+      defineConexiaComponents();
+
+      function App() {
+        const initialContent = useMemo(
+          () => [
+            { text: "Tienda La Abejita Feliz", align: "center" },
+            { text: "RFC: ABCD800101XYZ", align: "center" },
+            { charLine: "-" },
+            {
+              header: [
+                { text: "Producto", align: "left" },
+                { text: "Cant", align: "center" },
+                { text: "Precio", align: "right" }
+              ],
+              headerBold: true,
+              columnWidths: [60, 20, 20],
+              rows: []
+            }
+          ],
+          []
+        );
+
+        return (
+          <ConexiaTicketTemplate
+            value={initialContent}
+            onContentChange={(event) => console.log("contentChange", event.detail)}
+            onContentSubmit={(event) => console.log("contentSubmit", event.detail)}
+          />
+        );
+      }
+
+      createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Conexia Vanilla Example</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem;
+        font-family: "Source Sans 3", Arial, sans-serif;
+        background: #f8fafc;
+      }
+
+      .wrapper {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <conexia-ticket-template></conexia-ticket-template>
+    </div>
+
+    <script type="module">
+      import { defineConexiaComponents } from "https://unpkg.com/@conexia/core@latest/dist/index.js";
+
+      defineConexiaComponents();
+
+      const template = document.querySelector("conexia-ticket-template");
+
+      template.value = [
+        { text: "Tienda La Abejita Feliz", align: "center" },
+        { text: "RFC: ABCD800101XYZ", align: "center" },
+        { charLine: "-" },
+        {
+          header: [
+            { text: "Producto", align: "left" },
+            { text: "Cant", align: "center" },
+            { text: "Precio", align: "right" }
+          ],
+          headerBold: true,
+          columnWidths: [60, 20, 20],
+          rows: []
+        }
+      ];
+
+      template.addEventListener("contentChange", (event) => {
+        console.log("contentChange", event.detail);
+      });
+
+      template.addEventListener("contentSubmit", (event) => {
+        console.log("contentSubmit", event.detail);
+      });
+    </script>
+  </body>
+</html>

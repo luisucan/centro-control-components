@@ -1,2 +1,14 @@
 export { defineConexiaComponents } from "@conexia/core";
 export { ConexiaButton } from "./components/button";
+export { ConexiaLabel } from "./components/label";
+export { ConexiaSelect } from "./components/select";
+export { ConexiaInput } from "./components/input";
+export { ConexiaToggle } from "./components/toggle";
+export { ConexiaTable } from "./components/table";
+export { ConexiaCard } from "./components/card";
+export { ConexiaTicketTemplate } from "./components/ticket-template";
+export { ConexiaTicketPreview } from "./components/ticket-preview";
+export { ConexiaTicketTextBlock } from "./components/ticket-text-block";
+export { ConexiaTicketTableHeaderEditor } from "./components/ticket-table-header-editor";
+export { ConexiaTicketImageBlock } from "./components/ticket-image-block";
+export { ConexiaTicketQrBlock } from "./components/ticket-qr-block";
