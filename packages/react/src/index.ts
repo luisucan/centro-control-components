@@ -1,4 +1,4 @@
-export { defineConexiaComponents } from "@conexia/core";
+export { defineConexiaComponents } from "@luisvillafania/core";
 export { ConexiaButton } from "./components/button";
 export { ConexiaLabel } from "./components/label";
 export { ConexiaSelect } from "./components/select";

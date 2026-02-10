@@ -1,6 +1,6 @@
 import * as React from "react";
 import { createComponent } from "@lit/react";
-import { ConexiaTicketTemplate as ConexiaTicketTemplateElement } from "@conexia/core";
+import { ConexiaTicketTemplate as ConexiaTicketTemplateElement } from "@luisvillafania/core";
 
 export const ConexiaTicketTemplate = createComponent({
   react: React,

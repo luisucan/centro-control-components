@@ -1,4 +1,4 @@
-import { defineConexiaComponents } from "@conexia/core";
+import { defineConexiaComponents } from "@luisvillafania/core";
 
 export const registerConexiaComponents = (): void => {
   defineConexiaComponents();

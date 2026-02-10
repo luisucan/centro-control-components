@@ -1,6 +1,6 @@
 import * as React from "react";
 import { createComponent } from "@lit/react";
-import { ConexiaTicketQrBlock as ConexiaTicketQrBlockElement } from "@conexia/core";
+import { ConexiaTicketQrBlock as ConexiaTicketQrBlockElement } from "@luisvillafania/core";
 
 export const ConexiaTicketQrBlock = createComponent({
   react: React,

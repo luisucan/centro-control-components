@@ -1,5 +1,5 @@
 {
-  "name": "@conexia/react",
+  "name": "@luisvillafania/react",
   "version": "0.1.0",
   "type": "module",
   "description": "React wrappers for Conexia Web Components",
@@ -21,7 +21,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@conexia/core": "0.1.0",
+    "@luisvillafania/core": "0.1.0",
     "@lit/react": "^1.0.2"
   },
   "peerDependencies": {

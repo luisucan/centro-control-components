@@ -1,11 +1,11 @@
-# @conexia/react
+# @luisvillafania/react
 
 Wrappers React para los Web Components de Conexia.
 
 ## Instalacion
 
 ```
-npm install @conexia/react @conexia/core
+npm install @luisvillafania/react @luisvillafania/core
 ```
 
 ## Uso
@@ -15,7 +15,7 @@ import { useCallback } from "react";
 import {
   ConexiaTicketTemplate,
   defineConexiaComponents
-} from "@conexia/react";
+} from "@luisvillafania/react";
 
 defineConexiaComponents();
 

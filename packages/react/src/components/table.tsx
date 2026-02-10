@@ -1,6 +1,6 @@
 import * as React from "react";
 import { createComponent } from "@lit/react";
-import { ConexiaTable as ConexiaTableElement } from "@conexia/core";
+import { ConexiaTable as ConexiaTableElement } from "@luisvillafania/core";
 
 export const ConexiaTable = createComponent({
   react: React,

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { createComponent } from "@lit/react";
-import { ConexiaLabel as ConexiaLabelElement } from "@conexia/core";
+import { ConexiaLabel as ConexiaLabelElement } from "@luisvillafania/core";
 
 export const ConexiaLabel = createComponent({
   react: React,

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { createComponent } from "@lit/react";
-import { ConexiaTicketTextBlock as ConexiaTicketTextBlockElement } from "@conexia/core";
+import { ConexiaTicketTextBlock as ConexiaTicketTextBlockElement } from "@luisvillafania/core";
 
 export const ConexiaTicketTextBlock = createComponent({
   react: React,

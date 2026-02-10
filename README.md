@@ -4,22 +4,22 @@ Monorepo de componentes web con Lit y wrappers para React y Angular.
 
 ## Paquetes
 
-- `@conexia/core`: Web Components en Lit
-- `@conexia/react`: Wrapper React
-- `@conexia/angular`: Wrapper Angular
+- `@luisvillafania/core`: Web Components en Lit
+- `@luisvillafania/react`: Wrapper React
+- `@luisvillafania/angular`: Wrapper Angular
 
 ## Scripts
 
 - `npm run build`: compila todos los paquetes
 - `npm run dev`: modo watch en paquetes que lo soporten
-- `npm run storybook`: Storybook para `@conexia/core`
+- `npm run storybook`: Storybook para `@luisvillafania/core`
 - `npm run build-storybook`: build estático de Storybook
 
 ## Uso en Vanilla (sin bundler)
 
 ```html
 <script type="module">
-  import { defineConexiaComponents } from "https://unpkg.com/@conexia/core@latest/dist/index.js";
+  import { defineConexiaComponents } from "https://unpkg.com/@luisvillafania/core@latest/dist/index.js";
 
   defineConexiaComponents();
 
@@ -41,7 +41,7 @@ import { useCallback } from "react";
 import {
   ConexiaTicketTemplate,
   defineConexiaComponents
-} from "@conexia/react";
+} from "@luisvillafania/react";
 
 defineConexiaComponents();
 

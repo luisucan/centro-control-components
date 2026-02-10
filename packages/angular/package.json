@@ -1,5 +1,5 @@
 {
-  "name": "@conexia/angular",
+  "name": "@luisvillafania/angular",
   "version": "0.1.0",
   "type": "module",
   "description": "Angular wrappers for Conexia Web Components",
@@ -21,7 +21,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@conexia/core": "0.1.0"
+    "@luisvillafania/core": "0.1.0"
   },
   "peerDependencies": {
     "@angular/common": "^17.0.0",

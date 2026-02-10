@@ -1,18 +1,18 @@
-# @conexia/core
+# @luisvillafania/core
 
 Componentes web (Lit) para Conexia.
 
 ## Instalacion
 
 ```
-npm install @conexia/core
+npm install @luisvillafania/core
 ```
 
 ## Uso (Vanilla, sin bundler)
 
 ```html
 <script type="module">
-  import { defineConexiaComponents } from "https://unpkg.com/@conexia/core@latest/dist/index.js";
+  import { defineConexiaComponents } from "https://unpkg.com/@luisvillafania/core@latest/dist/index.js";
 
   defineConexiaComponents();
 

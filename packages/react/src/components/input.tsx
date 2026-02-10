@@ -1,6 +1,6 @@
 import * as React from "react";
 import { createComponent } from "@lit/react";
-import { ConexiaInput as ConexiaInputElement } from "@conexia/core";
+import { ConexiaInput as ConexiaInputElement } from "@luisvillafania/core";
 
 export const ConexiaInput = createComponent({
   react: React,
