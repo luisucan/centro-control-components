@@ -78,8 +78,11 @@ export class ConexiaTicketTableHeaderEditor extends LitElement {
   updated(changed: Map<string, unknown>) {
     if (changed.has("header")) {
       this.localHeader = this.header.length
-        ? this.header.map((cell) => ({ text: cell.text ?? "", align: cell.align ?? "left" }))
-        : [{ text: "", align: "left" }];
+        ? this.header.map((cell) => ({
+            text: cell.text ?? "",
+            align: (cell.align ?? "left") as Align
+          }))
+        : [{ text: "", align: "left" as Align }];
     }
     if (changed.has("headerBold")) {
       this.localHeaderBold = Boolean(this.headerBold);
@@ -114,7 +117,7 @@ export class ConexiaTicketTableHeaderEditor extends LitElement {
   }
 
   private addColumn() {
-    const header = [...this.localHeader, { text: "", align: "left" }];
+    const header = [...this.localHeader, { text: "", align: "left" as Align }];
     this.localHeader = header;
     this.localColumnWidths = this.normalizeWidths(this.localColumnWidths, header.length);
     this.emitChange();

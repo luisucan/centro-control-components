@@ -342,13 +342,13 @@ export class ConexiaTicketTemplate extends LitElement {
   }
 
   private normalizeTable(table: TableBlock): BuilderBlock {
-    const header = (table.header || []).map((cell) => ({
+    const header: TableCell[] = (table.header || []).map((cell) => ({
       text: cell.text ?? "",
-      align: cell.align ?? "left",
+      align: (cell.align ?? "left") as Align,
     }));
 
-    const safeHeader =
-      header.length > 0 ? header : [{ text: "", align: "left" }];
+    const safeHeader: TableCell[] =
+      header.length > 0 ? header : [{ text: "", align: "left" as Align }];
     const columnCount = safeHeader.length;
     const rows = (table.rows || []).map((row) =>
       Array.from({ length: columnCount }).map((_, index) => {

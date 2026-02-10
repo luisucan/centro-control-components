@@ -7,7 +7,7 @@
     "examples/*"
   ],
   "scripts": {
-    "build": "npm run build -ws",
+    "build": "npm run build -w packages/core && npm run build -w packages/react && npm run build -w packages/angular",
     "dev": "npm run dev -ws",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
