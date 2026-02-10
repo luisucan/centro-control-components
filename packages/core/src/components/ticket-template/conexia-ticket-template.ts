@@ -298,6 +298,9 @@ export class ConexiaTicketTemplate extends LitElement {
   @state()
   private shouldScrollToEnd = false;
 
+  @state()
+  private restoreScrollTop: number | null = null;
+
   @query(".builder")
   private builderElement?: HTMLElement;
 
@@ -305,12 +308,12 @@ export class ConexiaTicketTemplate extends LitElement {
     if (changed.has("value")) {
       this.blocks = this.normalizeValue(this.value);
     }
-    if (this.shouldScrollToEnd) {
-      this.shouldScrollToEnd = false;
+    if (this.restoreScrollTop !== null) {
       const builder = this.builderElement;
       if (builder) {
-        builder.scrollTop = builder.scrollHeight;
+        builder.scrollTop = this.restoreScrollTop;
       }
+      this.restoreScrollTop = null;
     }
   }
 
@@ -491,18 +494,19 @@ export class ConexiaTicketTemplate extends LitElement {
   }
 
   private updateBlock(index: number, updated: BuilderBlock) {
-    this.preserveBuilderScroll(() => {
-      this.blocks = this.blocks.map((block, i) =>
-        i === index ? updated : block,
-      );
-      this.emitChange();
-    });
+    const builder = this.builderElement;
+    if (builder) {
+      this.restoreScrollTop = builder.scrollTop;
+    }
+    this.blocks = this.blocks.map((block, i) =>
+      i === index ? updated : block,
+    );
+    this.emitChange();
   }
 
   private addBlock(kind: BlockKind) {
     const newBlock = this.createBlockByKind(kind);
     this.blocks = [...this.blocks, newBlock];
-    this.shouldScrollToEnd = true;
     this.emitChange();
   }
 
@@ -556,13 +560,15 @@ export class ConexiaTicketTemplate extends LitElement {
   }
 
   private removeBlock(index: number) {
-    this.preserveBuilderScroll(() => {
-      this.blocks = this.blocks.filter((_, i) => i !== index);
-      if (this.blocks.length === 0) {
-        this.blocks = [this.createDefaultBlock()];
-      }
-      this.emitChange();
-    });
+    const builder = this.builderElement;
+    if (builder) {
+      this.restoreScrollTop = builder.scrollTop;
+    }
+    this.blocks = this.blocks.filter((_, i) => i !== index);
+    if (this.blocks.length === 0) {
+      this.blocks = [this.createDefaultBlock()];
+    }
+    this.emitChange();
   }
 
   private moveBlock(index: number, direction: "up" | "down") {
@@ -570,13 +576,15 @@ export class ConexiaTicketTemplate extends LitElement {
     if (targetIndex < 0 || targetIndex >= this.blocks.length) {
       return;
     }
-    this.preserveBuilderScroll(() => {
-      const updated = [...this.blocks];
-      const [moved] = updated.splice(index, 1);
-      updated.splice(targetIndex, 0, moved);
-      this.blocks = updated;
-      this.emitChange();
-    });
+    const builder = this.builderElement;
+    if (builder) {
+      this.restoreScrollTop = builder.scrollTop;
+    }
+    const updated = [...this.blocks];
+    const [moved] = updated.splice(index, 1);
+    updated.splice(targetIndex, 0, moved);
+    this.blocks = updated;
+    this.emitChange();
   }
 
   private handleKindChange(index: number, kind: BlockKind) {
@@ -584,16 +592,6 @@ export class ConexiaTicketTemplate extends LitElement {
     this.updateBlock(index, newBlock);
   }
 
-  private preserveBuilderScroll(action: () => void) {
-    const builder = this.builderElement;
-    const scrollTop = builder?.scrollTop ?? 0;
-    action();
-    this.updateComplete.then(() => {
-      if (builder) {
-        builder.scrollTop = scrollTop;
-      }
-    });
-  }
 
   private updateTableHeader(
     block: BuilderBlock,
