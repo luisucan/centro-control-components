@@ -1,5 +1,5 @@
 import { css, html, LitElement, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property, query, state } from "lit/decorators.js";
 
 import "../card/conexia-card";
 import "../button/conexia-button";
@@ -11,10 +11,22 @@ import "../ticket-preview/conexia-ticket-preview";
 
 type Align = "left" | "center" | "right";
 
-type BlockKind = "image" | "text" | "cut" | "openDrawer" | "charLine" | "table" | "qr";
+type BlockKind =
+  | "image"
+  | "text"
+  | "cut"
+  | "openDrawer"
+  | "charLine"
+  | "table"
+  | "qr";
 
 type TextBlock = {
   text: string;
+  bold?: boolean;
+  size?: {
+    width: number;
+    height: number;
+  };
   align?: Align;
 };
 
@@ -63,7 +75,14 @@ export type EscPosContentBlock =
   | QrBlock;
 
 type BuilderBlock =
-  | { kind: "text"; text: string; align: Align }
+  | {
+      kind: "text";
+      text: string;
+      align: Align;
+      bold: boolean;
+      sizeWidth: number | null;
+      sizeHeight: number | null;
+    }
   | { kind: "image"; src: string }
   | { kind: "cut"; cut: boolean }
   | { kind: "openDrawer"; openDrawer: boolean }
@@ -83,11 +102,12 @@ type BuilderBlock =
 const blockKinds: { value: BlockKind; label: string }[] = [
   { value: "text", label: "Texto" },
   { value: "image", label: "Imagen" },
-  { value: "cut", label: "Corte" },
-  { value: "openDrawer", label: "Abrir cajon" },
-  { value: "charLine", label: "Linea" },
+  { value: "qr", label: "QR" },
   { value: "table", label: "Tabla" },
-  { value: "qr", label: "QR" }
+  { value: "cut", label: "Corte" },
+  { value: "openDrawer", label: "Abrir caja" },
+  { value: "cut", label: "Corte de caja" },
+  { value: "openDrawer", label: "Abrir caja" },
 ];
 
 @customElement("conexia-ticket-template")
@@ -95,7 +115,13 @@ export class ConexiaTicketTemplate extends LitElement {
   static styles = css`
     :host {
       display: block;
-      font-family: var(--cx-font-family, "Source Sans 3", "Helvetica Neue", Arial, sans-serif);
+      font-family: var(
+        --cx-font-family,
+        "Source Sans 3",
+        "Helvetica Neue",
+        Arial,
+        sans-serif
+      );
       color: var(--cx-color-text, #0f172a);
       max-width: 100%;
       width: 100%;
@@ -112,7 +138,7 @@ export class ConexiaTicketTemplate extends LitElement {
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
       gap: 1.25rem;
       align-items: start;
     }
@@ -164,6 +190,11 @@ export class ConexiaTicketTemplate extends LitElement {
       max-width: 100%;
     }
 
+    .row.compact {
+      grid-template-columns: repeat(3, minmax(0, max-content));
+      align-items: center;
+    }
+
     .row > * {
       min-width: 0;
     }
@@ -205,6 +236,11 @@ export class ConexiaTicketTemplate extends LitElement {
       max-width: 100%;
     }
 
+    .size-input {
+      max-width: 140px;
+    }
+
+
     .preview {
       position: sticky;
       top: 1rem;
@@ -235,6 +271,9 @@ export class ConexiaTicketTemplate extends LitElement {
 
   @state()
   private previewWidth = 80;
+
+  @query(".builder")
+  private builderElement?: HTMLElement;
 
   updated(changed: Map<string, unknown>) {
     if (changed.has("value")) {
@@ -276,7 +315,10 @@ export class ConexiaTicketTemplate extends LitElement {
         return {
           kind: "text",
           text: item.text ?? "",
-          align: item.align ?? "left"
+          align: item.align ?? "center",
+          bold: Boolean(item.bold),
+          sizeWidth: item.size?.width ?? 1,
+          sizeHeight: item.size?.height ?? 1,
         };
       }
 
@@ -287,21 +329,25 @@ export class ConexiaTicketTemplate extends LitElement {
   private normalizeTable(table: TableBlock): BuilderBlock {
     const header = (table.header || []).map((cell) => ({
       text: cell.text ?? "",
-      align: cell.align ?? "left"
+      align: cell.align ?? "left",
     }));
 
-    const safeHeader = header.length > 0 ? header : [{ text: "", align: "left" }];
+    const safeHeader =
+      header.length > 0 ? header : [{ text: "", align: "left" }];
     const columnCount = safeHeader.length;
     const rows = (table.rows || []).map((row) =>
       Array.from({ length: columnCount }).map((_, index) => {
         const cell = row[index] || { text: "", align: "left" };
         return {
           text: cell.text ?? "",
-          align: cell.align ?? "left"
+          align: cell.align ?? "left",
         };
-      })
+      }),
     );
-    const columnWidths = this.normalizeColumnWidths(table.columnWidths, columnCount);
+    const columnWidths = this.normalizeColumnWidths(
+      table.columnWidths,
+      columnCount,
+    );
 
     return {
       kind: "table",
@@ -311,23 +357,35 @@ export class ConexiaTicketTemplate extends LitElement {
       lineChar: table.lineChar ?? "-",
       rowSpacing: typeof table.rowSpacing === "number" ? table.rowSpacing : 1,
       footerLine: Boolean(table.footerLine),
-      rows
+      rows,
     };
   }
 
-  private normalizeColumnWidths(widths: number[] | undefined, count: number): number[] {
+  private normalizeColumnWidths(
+    widths: number[] | undefined,
+    count: number,
+  ): number[] {
     if (!widths || widths.length === 0) {
       const base = Math.floor(100 / count);
       return Array.from({ length: count }).map((_, index) =>
-        index === count - 1 ? 100 - base * (count - 1) : base
+        index === count - 1 ? 100 - base * (count - 1) : base,
       );
     }
 
-    return Array.from({ length: count }).map((_, index) => widths[index] ?? widths[0] ?? 0);
+    return Array.from({ length: count }).map(
+      (_, index) => widths[index] ?? widths[0] ?? 0,
+    );
   }
 
   private createDefaultBlock(): BuilderBlock {
-    return { kind: "text", text: "", align: "left" };
+    return {
+      kind: "text",
+      text: "",
+      align: "center",
+      bold: false,
+      sizeWidth: 1,
+      sizeHeight: 1,
+    };
   }
 
   private emitChange() {
@@ -336,8 +394,8 @@ export class ConexiaTicketTemplate extends LitElement {
       new CustomEvent<EscPosContentBlock[]>("contentChange", {
         detail: content,
         bubbles: true,
-        composed: true
-      })
+        composed: true,
+      }),
     );
   }
 
@@ -347,8 +405,8 @@ export class ConexiaTicketTemplate extends LitElement {
       new CustomEvent<EscPosContentBlock[]>("contentSubmit", {
         detail: content,
         bubbles: true,
-        composed: true
-      })
+        composed: true,
+      }),
     );
   }
 
@@ -367,7 +425,15 @@ export class ConexiaTicketTemplate extends LitElement {
       case "image":
         return { src: block.src };
       case "text":
-        return { text: block.text, align: block.align };
+        return {
+          text: block.text,
+          align: block.align,
+          bold: block.bold || undefined,
+          size:
+            block.sizeWidth !== null && block.sizeHeight !== null
+              ? { width: block.sizeWidth, height: block.sizeHeight }
+              : undefined,
+        };
       case "cut":
         return { cut: block.cut };
       case "openDrawer":
@@ -382,7 +448,7 @@ export class ConexiaTicketTemplate extends LitElement {
           lineChar: block.lineChar,
           rowSpacing: block.rowSpacing,
           footerLine: block.footerLine,
-          rows: block.rows
+          rows: block.rows,
         };
       case "qr":
         return { qrContent: block.qrContent };
@@ -392,7 +458,9 @@ export class ConexiaTicketTemplate extends LitElement {
   }
 
   private updateBlock(index: number, updated: BuilderBlock) {
-    this.blocks = this.blocks.map((block, i) => (i === index ? updated : block));
+    this.blocks = this.blocks.map((block, i) =>
+      i === index ? updated : block,
+    );
     this.emitChange();
   }
 
@@ -400,6 +468,11 @@ export class ConexiaTicketTemplate extends LitElement {
     const newBlock = this.createBlockByKind(kind);
     this.blocks = [...this.blocks, newBlock];
     this.emitChange();
+    this.updateComplete.then(() => {
+      if (this.builderElement) {
+        this.builderElement.scrollTop = this.builderElement.scrollHeight;
+      }
+    });
   }
 
   private createBlockByKind(kind: BlockKind): BuilderBlock {
@@ -418,21 +491,37 @@ export class ConexiaTicketTemplate extends LitElement {
           header: [
             { text: "Columna 1", align: "left" },
             { text: "Columna 2", align: "center" },
-            { text: "Columna 3", align: "right" }
+            { text: "Columna 3", align: "right" },
           ],
           headerBold: true,
           columnWidths: [60, 20, 20],
           lineChar: "-",
           rowSpacing: 1,
           footerLine: true,
-          rows: []
+          rows: [],
         };
       case "qr":
         return { kind: "qr", qrContent: "" };
       case "text":
       default:
-        return { kind: "text", text: "", align: "left" };
+        return {
+          kind: "text",
+          text: "",
+          align: "center",
+          bold: false,
+          sizeWidth: 1,
+          sizeHeight: 1,
+        };
     }
+  }
+
+  private parseOptionalNumber(value: string): number | null {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const parsed = Number(trimmed);
+    return Number.isNaN(parsed) ? null : parsed;
   }
 
   private removeBlock(index: number) {
@@ -460,22 +549,30 @@ export class ConexiaTicketTemplate extends LitElement {
     this.updateBlock(index, newBlock);
   }
 
-  private updateTableHeader(block: BuilderBlock, headerIndex: number, value: string) {
+  private updateTableHeader(
+    block: BuilderBlock,
+    headerIndex: number,
+    value: string,
+  ) {
     if (block.kind !== "table") {
       return;
     }
     const header = block.header.map((cell, index) =>
-      index === headerIndex ? { ...cell, text: value } : cell
+      index === headerIndex ? { ...cell, text: value } : cell,
     );
     this.updateBlock(this.blocks.indexOf(block), { ...block, header });
   }
 
-  private updateTableHeaderAlign(block: BuilderBlock, headerIndex: number, align: Align) {
+  private updateTableHeaderAlign(
+    block: BuilderBlock,
+    headerIndex: number,
+    align: Align,
+  ) {
     if (block.kind !== "table") {
       return;
     }
     const header = block.header.map((cell, index) =>
-      index === headerIndex ? { ...cell, align } : cell
+      index === headerIndex ? { ...cell, align } : cell,
     );
     this.updateBlock(this.blocks.indexOf(block), { ...block, header });
   }
@@ -484,7 +581,7 @@ export class ConexiaTicketTemplate extends LitElement {
     block: BuilderBlock,
     rowIndex: number,
     cellIndex: number,
-    value: string
+    value: string,
   ) {
     if (block.kind !== "table") {
       return;
@@ -494,7 +591,7 @@ export class ConexiaTicketTemplate extends LitElement {
         return row;
       }
       return row.map((cell, cellPos) =>
-        cellPos === cellIndex ? { ...cell, text: value } : cell
+        cellPos === cellIndex ? { ...cell, text: value } : cell,
       );
     });
     this.updateBlock(this.blocks.indexOf(block), { ...block, rows });
@@ -504,7 +601,7 @@ export class ConexiaTicketTemplate extends LitElement {
     block: BuilderBlock,
     rowIndex: number,
     cellIndex: number,
-    align: Align
+    align: Align,
   ) {
     if (block.kind !== "table") {
       return;
@@ -514,13 +611,17 @@ export class ConexiaTicketTemplate extends LitElement {
         return row;
       }
       return row.map((cell, cellPos) =>
-        cellPos === cellIndex ? { ...cell, align } : cell
+        cellPos === cellIndex ? { ...cell, align } : cell,
       );
     });
     this.updateBlock(this.blocks.indexOf(block), { ...block, rows });
   }
 
-  private updateTableConfig(block: BuilderBlock, key: keyof BuilderBlock, value: unknown) {
+  private updateTableConfig(
+    block: BuilderBlock,
+    key: keyof BuilderBlock,
+    value: unknown,
+  ) {
     if (block.kind !== "table") {
       return;
     }
@@ -532,8 +633,14 @@ export class ConexiaTicketTemplate extends LitElement {
     if (block.kind !== "table") {
       return;
     }
-    const newRow = block.header.map(() => ({ text: "", align: "left" as Align }));
-    this.updateBlock(this.blocks.indexOf(block), { ...block, rows: [...block.rows, newRow] });
+    const newRow = block.header.map(() => ({
+      text: "",
+      align: "left" as Align,
+    }));
+    this.updateBlock(this.blocks.indexOf(block), {
+      ...block,
+      rows: [...block.rows, newRow],
+    });
   }
 
   private removeTableRow(block: BuilderBlock, rowIndex: number) {
@@ -549,9 +656,20 @@ export class ConexiaTicketTemplate extends LitElement {
       return;
     }
     const header = [...block.header, { text: "", align: "left" as Align }];
-    const rows = block.rows.map((row) => [...row, { text: "", align: "left" as Align }]);
-    const columnWidths = this.normalizeColumnWidths(block.columnWidths, header.length);
-    this.updateBlock(this.blocks.indexOf(block), { ...block, header, rows, columnWidths });
+    const rows = block.rows.map((row) => [
+      ...row,
+      { text: "", align: "left" as Align },
+    ]);
+    const columnWidths = this.normalizeColumnWidths(
+      block.columnWidths,
+      header.length,
+    );
+    this.updateBlock(this.blocks.indexOf(block), {
+      ...block,
+      header,
+      rows,
+      columnWidths,
+    });
   }
 
   private removeTableColumn(block: BuilderBlock, columnIndex: number) {
@@ -559,26 +677,45 @@ export class ConexiaTicketTemplate extends LitElement {
       return;
     }
     const header = block.header.filter((_, index) => index !== columnIndex);
-    const rows = block.rows.map((row) => row.filter((_, index) => index !== columnIndex));
-    const columnWidths = this.normalizeColumnWidths(block.columnWidths, header.length);
-    this.updateBlock(this.blocks.indexOf(block), { ...block, header, rows, columnWidths });
+    const rows = block.rows.map((row) =>
+      row.filter((_, index) => index !== columnIndex),
+    );
+    const columnWidths = this.normalizeColumnWidths(
+      block.columnWidths,
+      header.length,
+    );
+    this.updateBlock(this.blocks.indexOf(block), {
+      ...block,
+      header,
+      rows,
+      columnWidths,
+    });
   }
 
-  private updateColumnWidth(block: BuilderBlock, columnIndex: number, value: string) {
+  private updateColumnWidth(
+    block: BuilderBlock,
+    columnIndex: number,
+    value: string,
+  ) {
     if (block.kind !== "table") {
       return;
     }
     const numberValue = Number(value);
     const safeValue = Number.isNaN(numberValue) ? 0 : numberValue;
     const columnWidths = block.columnWidths.map((width, index) =>
-      index === columnIndex ? safeValue : width
+      index === columnIndex ? safeValue : width,
     );
     this.updateBlock(this.blocks.indexOf(block), { ...block, columnWidths });
   }
 
-  private renderAlignSelect(value: Align, onChange: (align: Align) => void) {
+  private renderAlignSelect(
+    value: Align,
+    onChange: (align: Align) => void,
+    label?: string,
+  ) {
     return html`
       <conexia-select
+        label=${label ?? ""}
         .value=${value}
         @change=${(event: Event) => {
           const selected = this.readValue(event) as Align | "";
@@ -588,7 +725,7 @@ export class ConexiaTicketTemplate extends LitElement {
         }}
       >
         <option value="left">Izquierda</option>
-        <option value="center">Centro</option>
+        <option value="center">Centrado</option>
         <option value="right">Derecha</option>
       </conexia-select>
     `;
@@ -606,14 +743,22 @@ export class ConexiaTicketTemplate extends LitElement {
             label="Encabezado en negrita"
             ?checked=${block.headerBold}
             @change=${(event: Event) => {
-              this.updateTableConfig(block, "headerBold", this.readChecked(event));
+              this.updateTableConfig(
+                block,
+                "headerBold",
+                this.readChecked(event),
+              );
             }}
           ></conexia-toggle>
           <conexia-toggle
             label="Linea de cierre"
             ?checked=${block.footerLine}
             @change=${(event: Event) => {
-              this.updateTableConfig(block, "footerLine", this.readChecked(event));
+              this.updateTableConfig(
+                block,
+                "footerLine",
+                this.readChecked(event),
+              );
             }}
           ></conexia-toggle>
         </div>
@@ -622,7 +767,11 @@ export class ConexiaTicketTemplate extends LitElement {
             label="Caracter de linea"
             .value=${block.lineChar}
             @input=${(event: Event) => {
-              this.updateTableConfig(block, "lineChar", this.readValue(event) || "-");
+              this.updateTableConfig(
+                block,
+                "lineChar",
+                this.readValue(event) || "-",
+              );
             }}
           ></conexia-input>
           <conexia-input
@@ -630,7 +779,11 @@ export class ConexiaTicketTemplate extends LitElement {
             .value=${String(block.rowSpacing)}
             @input=${(event: Event) => {
               const value = Number(this.readValue(event) || "1");
-              this.updateTableConfig(block, "rowSpacing", Number.isNaN(value) ? 1 : value);
+              this.updateTableConfig(
+                block,
+                "rowSpacing",
+                Number.isNaN(value) ? 1 : value,
+              );
             }}
           ></conexia-input>
         </div>
@@ -653,7 +806,7 @@ export class ConexiaTicketTemplate extends LitElement {
         <div class="table-grid">
           ${block.header.map(
             (cell, index) => html`
-              <div class="row">
+              <div class="row compact">
                 <conexia-input
                   label="Encabezado ${index + 1}"
                   .value=${cell.text}
@@ -662,13 +815,17 @@ export class ConexiaTicketTemplate extends LitElement {
                   }}
                 ></conexia-input>
                 ${this.renderAlignSelect(cell.align ?? "left", (align) =>
-                  this.updateTableHeaderAlign(block, index, align)
+                  this.updateTableHeaderAlign(block, index, align),
                 )}
                 <conexia-input
                   label="Ancho"
                   .value=${String(block.columnWidths[index] ?? 0)}
                   @input=${(event: Event) => {
-                    this.updateColumnWidth(block, index, this.readValue(event) || "0");
+                    this.updateColumnWidth(
+                      block,
+                      index,
+                      this.readValue(event) || "0",
+                    );
                   }}
                 ></conexia-input>
                 <conexia-button
@@ -680,7 +837,7 @@ export class ConexiaTicketTemplate extends LitElement {
                   Quitar
                 </conexia-button>
               </div>
-            `
+            `,
           )}
         </div>
         <div class="table-grid">
@@ -688,7 +845,9 @@ export class ConexiaTicketTemplate extends LitElement {
             (row, rowIndex) => html`
               <div class="block">
                 <div class="row">
-                  <conexia-label tone="muted">Fila ${rowIndex + 1}</conexia-label>
+                  <conexia-label tone="muted"
+                    >Fila ${rowIndex + 1}</conexia-label
+                  >
                   <conexia-button
                     size="sm"
                     variant="ghost"
@@ -704,17 +863,27 @@ export class ConexiaTicketTemplate extends LitElement {
                         label="Celda ${cellIndex + 1}"
                         .value=${cell.text}
                         @input=${(event: Event) => {
-                          this.updateTableCell(block, rowIndex, cellIndex, this.readValue(event));
+                          this.updateTableCell(
+                            block,
+                            rowIndex,
+                            cellIndex,
+                            this.readValue(event),
+                          );
                         }}
                       ></conexia-input>
                       ${this.renderAlignSelect(cell.align ?? "left", (align) =>
-                        this.updateTableCellAlign(block, rowIndex, cellIndex, align)
+                        this.updateTableCellAlign(
+                          block,
+                          rowIndex,
+                          cellIndex,
+                          align,
+                        ),
                       )}
                     </div>
-                  `
+                  `,
                 )}
               </div>
-            `
+            `,
           )}
         </div>
       </div>
@@ -725,20 +894,6 @@ export class ConexiaTicketTemplate extends LitElement {
     return html`
       <div class="block">
         <div class="block-header">
-          <conexia-select
-          .value=${block.kind}
-          ?disabled=${this.disabled}
-          @change=${(event: Event) => {
-              const selected = this.readValue(event) as BlockKind | "";
-              if (selected) {
-                this.handleKindChange(index, selected);
-              }
-            }}
-          >
-            ${blockKinds.map(
-              (kind) => html`<option value=${kind.value}>${kind.label}</option>`
-            )}
-          </conexia-select>
           <div class="block-actions">
             <conexia-button
               size="sm"
@@ -756,7 +911,11 @@ export class ConexiaTicketTemplate extends LitElement {
             >
               Bajar
             </conexia-button>
-            <conexia-button size="sm" variant="ghost" @click=${() => this.removeBlock(index)}>
+            <conexia-button
+              size="sm"
+              variant="ghost"
+              @click=${() => this.removeBlock(index)}
+            >
               Quitar
             </conexia-button>
           </div>
@@ -772,91 +931,130 @@ export class ConexiaTicketTemplate extends LitElement {
                   @input=${(event: Event) => {
                     this.updateBlock(index, {
                       ...block,
-                      text: this.readValue(event)
+                      text: this.readValue(event),
                     });
                   }}
                 ></conexia-input>
-                ${this.renderAlignSelect(block.align, (align) =>
-                  this.updateBlock(index, { ...block, align })
+                ${this.renderAlignSelect(
+                  block.align,
+                  (align) => this.updateBlock(index, { ...block, align }),
+                  "Alineacion",
                 )}
+              </div>
+              <div class="row">
+                <conexia-input
+                  label="Tamano ancho"
+                  class="size-input"
+                  .value=${block.sizeWidth === null ? "" : String(block.sizeWidth)}
+                  ?disabled=${this.disabled}
+                  @input=${(event: Event) => {
+                    this.updateBlock(index, {
+                      ...block,
+                      sizeWidth: this.parseOptionalNumber(this.readValue(event)),
+                    });
+                  }}
+                ></conexia-input>
+                <conexia-input
+                  label="Tamano alto"
+                  class="size-input"
+                  .value=${block.sizeHeight === null ? "" : String(block.sizeHeight)}
+                  ?disabled=${this.disabled}
+                  @input=${(event: Event) => {
+                    this.updateBlock(index, {
+                      ...block,
+                      sizeHeight: this.parseOptionalNumber(this.readValue(event)),
+                    });
+                  }}
+                ></conexia-input>
+                <conexia-toggle
+                  label="Negrita"
+                  ?checked=${block.bold}
+                  ?disabled=${this.disabled}
+                  @change=${(event: Event) => {
+                    this.updateBlock(index, {
+                      ...block,
+                      bold: this.readChecked(event),
+                    });
+                  }}
+                ></conexia-toggle>
               </div>
             `
           : nothing}
-
         ${block.kind === "image"
           ? html`
-                <conexia-input
-                  label="Ruta de imagen"
-                  .value=${block.src}
-                  ?disabled=${this.disabled}
-                  @input=${(event: Event) => {
-                  this.updateBlock(index, { ...block, src: this.readValue(event) });
+              <conexia-input
+                label="Ruta de imagen"
+                .value=${block.src}
+                ?disabled=${this.disabled}
+                @input=${(event: Event) => {
+                  this.updateBlock(index, {
+                    ...block,
+                    src: this.readValue(event),
+                  });
                 }}
               ></conexia-input>
             `
           : nothing}
-
         ${block.kind === "cut"
           ? html`
-                <conexia-toggle
+              <conexia-toggle
                 label="Cortar papel"
-                  ?checked=${block.cut}
-                  ?disabled=${this.disabled}
-                  @change=${(event: Event) => {
-                  this.updateBlock(index, { ...block, cut: this.readChecked(event) });
+                ?checked=${block.cut}
+                ?disabled=${this.disabled}
+                @change=${(event: Event) => {
+                  this.updateBlock(index, {
+                    ...block,
+                    cut: this.readChecked(event),
+                  });
                 }}
               ></conexia-toggle>
             `
           : nothing}
-
         ${block.kind === "openDrawer"
           ? html`
-                <conexia-toggle
-                label="Abrir cajon"
-                  ?checked=${block.openDrawer}
-                  ?disabled=${this.disabled}
-                  @change=${(event: Event) => {
+              <conexia-toggle
+                label="Abrir caja"
+                ?checked=${block.openDrawer}
+                ?disabled=${this.disabled}
+                @change=${(event: Event) => {
                   this.updateBlock(index, {
                     ...block,
-                    openDrawer: this.readChecked(event)
+                    openDrawer: this.readChecked(event),
                   });
                 }}
               ></conexia-toggle>
             `
           : nothing}
-
         ${block.kind === "charLine"
           ? html`
-                <conexia-input
-                  label="Linea"
-                  .value=${block.charLine}
-                  ?disabled=${this.disabled}
-                  @input=${(event: Event) => {
+              <conexia-input
+                label="Linea"
+                .value=${block.charLine}
+                ?disabled=${this.disabled}
+                @input=${(event: Event) => {
                   this.updateBlock(index, {
                     ...block,
-                    charLine: this.readValue(event)
+                    charLine: this.readValue(event),
                   });
                 }}
               ></conexia-input>
             `
           : nothing}
-
         ${block.kind === "qr"
           ? html`
-                <conexia-input
-                  label="Contenido QR"
-                  .value=${block.qrContent}
-                  ?disabled=${this.disabled}
-                  @input=${(event: Event) => {
+              <conexia-input
+                label="Contenido QR"
+                .value=${block.qrContent}
+                ?disabled=${this.disabled}
+                @input=${(event: Event) => {
                   this.updateBlock(index, {
                     ...block,
-                    qrContent: this.readValue(event)
+                    qrContent: this.readValue(event),
                   });
                 }}
               ></conexia-input>
             `
           : nothing}
-
         ${block.kind === "table" ? this.renderTableEditor(block) : nothing}
       </div>
     `;
@@ -864,21 +1062,10 @@ export class ConexiaTicketTemplate extends LitElement {
 
   render() {
     return html`
-      <conexia-card style="width: 100%; max-width: 1280px; margin: 0 auto;">
+      <conexia-card style="width: 100%; max-width: 1440px; margin: 0 auto;">
         <div slot="header" class="header">
           <strong>Plantilla de ticket</strong>
           <div class="table-actions">
-            <conexia-select
-              .value=${String(this.previewWidth)}
-              ?disabled=${this.disabled}
-              @change=${(event: Event) => {
-                const value = Number(this.readValue(event));
-                this.previewWidth = Number.isNaN(value) ? 80 : value;
-              }}
-            >
-              <option value="80">80mm</option>
-              <option value="58">58mm</option>
-            </conexia-select>
             <conexia-toggle
               label="Mostrar vista previa"
               ?checked=${this.showPreview}
@@ -899,12 +1086,16 @@ export class ConexiaTicketTemplate extends LitElement {
               }}
             >
               ${blockKinds.map(
-                (kind) => html`<option value=${kind.value}>${kind.label}</option>`
+                (kind) =>
+                  html`<option value=${kind.value}>${kind.label}</option>`,
               )}
             </conexia-select>
           </div>
         </div>
-        <div slot="body" class="layout ${this.showPreview ? "" : "hidden-preview"}">
+        <div
+          slot="body"
+          class="layout ${this.showPreview ? "" : "hidden-preview"}"
+        >
           <div class="builder">
             ${this.blocks.map((block, index) => this.renderBlock(block, index))}
           </div>
@@ -912,7 +1103,9 @@ export class ConexiaTicketTemplate extends LitElement {
             ? html`
                 <div class="preview">
                   <conexia-ticket-preview
-                    .content=${this.blocks.map((block) => this.toContentBlock(block))}
+                    .content=${this.blocks.map((block) =>
+                      this.toContentBlock(block),
+                    )}
                     .widthMm=${this.previewWidth}
                   ></conexia-ticket-preview>
                 </div>

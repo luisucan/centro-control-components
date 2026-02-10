@@ -206,9 +206,23 @@ export class ConexiaTicketPreview extends LitElement {
     }
 
     if ("text" in block) {
-      return html`<div class="text" style="text-align: ${block.align ?? "left"};">${
-        block.text
-      }</div>`;
+      const sizeHeight = block.size?.height ?? 1;
+      const sizeWidth = block.size?.width ?? 1;
+      const fontSize = 0.85 * sizeHeight;
+      const letterSpacing = sizeWidth > 1 ? 0.02 * sizeWidth : 0;
+      return html`
+        <div
+          class="text"
+          style="
+            text-align: ${block.align ?? "left"};
+            font-weight: ${block.bold ? "700" : "400"};
+            font-size: ${fontSize}rem;
+            letter-spacing: ${letterSpacing}em;
+          "
+        >
+          ${block.text}
+        </div>
+      `;
     }
 
     if ("cut" in block) {
@@ -216,7 +230,7 @@ export class ConexiaTicketPreview extends LitElement {
     }
 
     if ("openDrawer" in block) {
-      return html`<div class="drawer">Abrir cajon</div>`;
+      return html`<div class="drawer">Abrir caja</div>`;
     }
 
     if ("charLine" in block) {

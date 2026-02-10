@@ -28,6 +28,7 @@ export class ConexiaInput extends LitElement {
     }
 
     input {
+      box-sizing: border-box;
       width: 100%;
       border-radius: var(--cx-radius-md, 12px);
       border: 1px solid var(--cx-control-border, #cbd5e1);
