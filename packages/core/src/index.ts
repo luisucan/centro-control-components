@@ -31,3 +31,20 @@ export {
   type EscPosContentBlock
 } from "./components/ticket-template/conexia-ticket-template";
 export { ConexiaTicketPreview } from "./components/ticket-preview/conexia-ticket-preview";
+export {
+  ConexiaTicketTextBlock,
+  type ConexiaTicketTextValue
+} from "./components/ticket-text-block/conexia-ticket-text-block";
+export {
+  ConexiaTicketTableHeaderEditor,
+  type ConexiaTableHeaderCell,
+  type ConexiaTableHeaderConfig
+} from "./components/ticket-table-header-editor/conexia-ticket-table-header-editor";
+export {
+  ConexiaTicketImageBlock,
+  type ConexiaTicketImageValue
+} from "./components/ticket-image-block/conexia-ticket-image-block";
+export {
+  ConexiaTicketQrBlock,
+  type ConexiaTicketQrValue
+} from "./components/ticket-qr-block/conexia-ticket-qr-block";

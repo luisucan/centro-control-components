@@ -6,8 +6,11 @@ import "../button/conexia-button";
 import "../select/conexia-select";
 import "../input/conexia-input";
 import "../toggle/conexia-toggle";
-import "../label/conexia-label";
 import "../ticket-preview/conexia-ticket-preview";
+import "../ticket-text-block/conexia-ticket-text-block";
+import "../ticket-table-header-editor/conexia-ticket-table-header-editor";
+import "../ticket-image-block/conexia-ticket-image-block";
+import "../ticket-qr-block/conexia-ticket-qr-block";
 
 type Align = "left" | "center" | "right";
 
@@ -189,32 +192,8 @@ export class ConexiaTicketTemplate extends LitElement {
       max-width: 100%;
     }
 
-    .row.compact {
-      grid-template-columns: repeat(3, minmax(0, max-content));
-      align-items: center;
-    }
-
-    .row.compact conexia-select {
-      min-width: 120px;
-    }
-
     .row > * {
       min-width: 0;
-    }
-
-    .table-editor {
-      display: grid;
-      gap: 0.75rem;
-      background: var(--cx-color-secondary, #f8fafc);
-      border-radius: var(--cx-radius-md, 12px);
-      padding: 0.75rem;
-      max-width: 100%;
-    }
-
-    .table-grid {
-      display: grid;
-      gap: 0.5rem;
-      max-width: 100%;
     }
 
     .table-actions {
@@ -550,15 +529,6 @@ export class ConexiaTicketTemplate extends LitElement {
     }
   }
 
-  private parseOptionalNumber(value: string): number | null {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      return null;
-    }
-    const parsed = Number(trimmed);
-    return Number.isNaN(parsed) ? null : parsed;
-  }
-
   private removeBlock(index: number) {
     const builder = this.builderElement;
     if (builder) {
@@ -587,262 +557,31 @@ export class ConexiaTicketTemplate extends LitElement {
     this.emitChange();
   }
 
-  private handleKindChange(index: number, kind: BlockKind) {
-    const newBlock = this.createBlockByKind(kind);
-    this.updateBlock(index, newBlock);
-  }
-
-
-  private updateTableHeader(
-    block: BuilderBlock,
-    headerIndex: number,
-    value: string,
-  ) {
-    if (block.kind !== "table") {
-      return;
-    }
-    const header = block.header.map((cell, index) =>
-      index === headerIndex ? { ...cell, text: value } : cell,
-    );
-    this.updateBlock(this.blocks.indexOf(block), { ...block, header });
-  }
-
-  private updateTableHeaderAlign(
-    block: BuilderBlock,
-    headerIndex: number,
-    align: Align,
-  ) {
-    if (block.kind !== "table") {
-      return;
-    }
-    const header = block.header.map((cell, index) =>
-      index === headerIndex ? { ...cell, align } : cell,
-    );
-    this.updateBlock(this.blocks.indexOf(block), { ...block, header });
-  }
-
-  private updateTableCell(
-    block: BuilderBlock,
-    rowIndex: number,
-    cellIndex: number,
-    value: string,
-  ) {
-    if (block.kind !== "table") {
-      return;
-    }
-    const rows = block.rows.map((row, index) => {
-      if (index !== rowIndex) {
-        return row;
-      }
-      return row.map((cell, cellPos) =>
-        cellPos === cellIndex ? { ...cell, text: value } : cell,
-      );
-    });
-    this.updateBlock(this.blocks.indexOf(block), { ...block, rows });
-  }
-
-  private updateTableCellAlign(
-    block: BuilderBlock,
-    rowIndex: number,
-    cellIndex: number,
-    align: Align,
-  ) {
-    if (block.kind !== "table") {
-      return;
-    }
-    const rows = block.rows.map((row, index) => {
-      if (index !== rowIndex) {
-        return row;
-      }
-      return row.map((cell, cellPos) =>
-        cellPos === cellIndex ? { ...cell, align } : cell,
-      );
-    });
-    this.updateBlock(this.blocks.indexOf(block), { ...block, rows });
-  }
-
-  private updateTableConfig(
-    block: BuilderBlock,
-    key: keyof BuilderBlock,
-    value: unknown,
-  ) {
-    if (block.kind !== "table") {
-      return;
-    }
-    const updated = { ...block, [key]: value } as BuilderBlock;
-    this.updateBlock(this.blocks.indexOf(block), updated);
-  }
-
-  private addTableRow(block: BuilderBlock) {
-    if (block.kind !== "table") {
-      return;
-    }
-    const newRow = block.header.map(() => ({
-      text: "",
-      align: "left" as Align,
-    }));
-    this.updateBlock(this.blocks.indexOf(block), {
-      ...block,
-      rows: [...block.rows, newRow],
-    });
-  }
-
-  private removeTableRow(block: BuilderBlock, rowIndex: number) {
-    if (block.kind !== "table") {
-      return;
-    }
-    const rows = block.rows.filter((_, index) => index !== rowIndex);
-    this.updateBlock(this.blocks.indexOf(block), { ...block, rows });
-  }
-
-  private addTableColumn(block: BuilderBlock) {
-    if (block.kind !== "table") {
-      return;
-    }
-    const header = [...block.header, { text: "", align: "left" as Align }];
-    const rows = block.rows.map((row) => [
-      ...row,
-      { text: "", align: "left" as Align },
-    ]);
-    const columnWidths = this.normalizeColumnWidths(
-      block.columnWidths,
-      header.length,
-    );
-    this.updateBlock(this.blocks.indexOf(block), {
-      ...block,
-      header,
-      rows,
-      columnWidths,
-    });
-  }
-
-  private removeTableColumn(block: BuilderBlock, columnIndex: number) {
-    if (block.kind !== "table" || block.header.length <= 1) {
-      return;
-    }
-    const header = block.header.filter((_, index) => index !== columnIndex);
-    const rows = block.rows.map((row) =>
-      row.filter((_, index) => index !== columnIndex),
-    );
-    const columnWidths = this.normalizeColumnWidths(
-      block.columnWidths,
-      header.length,
-    );
-    this.updateBlock(this.blocks.indexOf(block), {
-      ...block,
-      header,
-      rows,
-      columnWidths,
-    });
-  }
-
-  private updateColumnWidth(
-    block: BuilderBlock,
-    columnIndex: number,
-    value: string,
-  ) {
-    if (block.kind !== "table") {
-      return;
-    }
-    const numberValue = Number(value);
-    const safeValue = Number.isNaN(numberValue) ? 0 : numberValue;
-    const columnWidths = block.columnWidths.map((width, index) =>
-      index === columnIndex ? safeValue : width,
-    );
-    this.updateBlock(this.blocks.indexOf(block), { ...block, columnWidths });
-  }
-
-  private renderAlignSelect(
-    value: Align,
-    onChange: (align: Align) => void,
-    label?: string,
-  ) {
-    return html`
-      <conexia-select
-        label=${label ?? ""}
-        .value=${value}
-        @change=${(event: Event) => {
-          const selected = this.readValue(event) as Align | "";
-          if (selected) {
-            onChange(selected);
-          }
-        }}
-      >
-        <option value="left">Izquierda</option>
-        <option value="center">Centrado</option>
-        <option value="right">Derecha</option>
-      </conexia-select>
-    `;
-  }
-
   private renderTableEditor(block: BuilderBlock) {
     if (block.kind !== "table") {
       return nothing;
     }
 
     return html`
-      <div class="table-editor">
-        <div class="row">
-          <conexia-toggle
-            label="Encabezado en negrita"
-            ?checked=${block.headerBold}
-            @change=${(event: Event) => {
-              this.updateTableConfig(
-                block,
-                "headerBold",
-                this.readChecked(event),
-              );
-            }}
-          ></conexia-toggle>
-        </div>
-        <div class="table-actions">
-          <conexia-button
-            size="sm"
-            variant="secondary"
-            @click=${() => this.addTableColumn(block)}
-          >
-            Agregar columna
-          </conexia-button>
-        </div>
-        <div class="table-grid">
-          ${block.header.map(
-            (cell, index) => html`
-              <div class="row compact">
-                <conexia-input
-                  label="Encabezado ${index + 1}"
-                  .value=${cell.text}
-                  @input=${(event: Event) => {
-                    this.updateTableHeader(block, index, this.readValue(event));
-                  }}
-                ></conexia-input>
-                ${this.renderAlignSelect(cell.align ?? "left", (align) =>
-                  this.updateTableHeaderAlign(block, index, align),
-                  "Alineacion",
-                )}
-                <conexia-input
-                  label="Ancho"
-                  .value=${String(block.columnWidths[index] ?? 0)}
-                  @input=${(event: Event) => {
-                    this.updateColumnWidth(
-                      block,
-                      index,
-                      this.readValue(event) || "0",
-                    );
-                  }}
-                ></conexia-input>
-                <conexia-button
-                  size="sm"
-                  variant="ghost"
-                  ?disabled=${block.header.length <= 1}
-                  @click=${() => this.removeTableColumn(block, index)}
-                >
-                  Quitar
-                </conexia-button>
-              </div>
-            `,
-          )}
-        </div>
-      </div>
+      <conexia-ticket-table-header-editor
+        .header=${block.header}
+        .headerBold=${block.headerBold}
+        .columnWidths=${block.columnWidths}
+        ?disabled=${this.disabled}
+        @change=${(event: CustomEvent) => {
+          const detail = event.detail as {
+            header: TableCell[];
+            headerBold: boolean;
+            columnWidths: number[];
+          };
+          this.updateBlock(this.blocks.indexOf(block), {
+            ...block,
+            header: detail.header,
+            headerBold: detail.headerBold,
+            columnWidths: detail.columnWidths
+          });
+        }}
+      ></conexia-ticket-table-header-editor>
     `;
   }
 
@@ -879,76 +618,46 @@ export class ConexiaTicketTemplate extends LitElement {
 
         ${block.kind === "text"
           ? html`
-              <div class="row">
-                <conexia-input
-                  label="Texto"
-                  .value=${block.text}
-                  ?disabled=${this.disabled}
-                  @input=${(event: Event) => {
-                    this.updateBlock(index, {
-                      ...block,
-                      text: this.readValue(event),
-                    });
-                  }}
-                ></conexia-input>
-                ${this.renderAlignSelect(
-                  block.align ?? "center",
-                  (align) => this.updateBlock(index, { ...block, align }),
-                  "Alineacion",
-                )}
-              </div>
-              <div class="row">
-                <conexia-input
-                  label="Tamano ancho"
-                  class="size-input"
-                  .value=${block.sizeWidth === null ? "" : String(block.sizeWidth)}
-                  ?disabled=${this.disabled}
-                  @input=${(event: Event) => {
-                    this.updateBlock(index, {
-                      ...block,
-                      sizeWidth: this.parseOptionalNumber(this.readValue(event)),
-                    });
-                  }}
-                ></conexia-input>
-                <conexia-input
-                  label="Tamano alto"
-                  class="size-input"
-                  .value=${block.sizeHeight === null ? "" : String(block.sizeHeight)}
-                  ?disabled=${this.disabled}
-                  @input=${(event: Event) => {
-                    this.updateBlock(index, {
-                      ...block,
-                      sizeHeight: this.parseOptionalNumber(this.readValue(event)),
-                    });
-                  }}
-                ></conexia-input>
-                <conexia-toggle
-                  label="Negrita"
-                  ?checked=${block.bold}
-                  ?disabled=${this.disabled}
-                  @change=${(event: Event) => {
-                    this.updateBlock(index, {
-                      ...block,
-                      bold: this.readChecked(event),
-                    });
-                  }}
-                ></conexia-toggle>
-              </div>
+              <conexia-ticket-text-block
+                .value=${{
+                  text: block.text,
+                  align: block.align,
+                  bold: block.bold,
+                  size: {
+                    width: block.sizeWidth ?? 1,
+                    height: block.sizeHeight ?? 1
+                  }
+                }}
+                ?disabled=${this.disabled}
+                @change=${(event: CustomEvent) => {
+                  const detail = event.detail as {
+                    text: string;
+                    align: Align;
+                    bold?: boolean;
+                    size?: { width: number; height: number };
+                  };
+                  this.updateBlock(index, {
+                    ...block,
+                    text: detail.text,
+                    align: detail.align ?? "center",
+                    bold: Boolean(detail.bold),
+                    sizeWidth: detail.size?.width ?? 1,
+                    sizeHeight: detail.size?.height ?? 1
+                  });
+                }}
+              ></conexia-ticket-text-block>
             `
           : nothing}
         ${block.kind === "image"
           ? html`
-              <conexia-input
-                label="Ruta de imagen"
-                .value=${block.src}
+              <conexia-ticket-image-block
+                .value=${{ src: block.src }}
                 ?disabled=${this.disabled}
-                @input=${(event: Event) => {
-                  this.updateBlock(index, {
-                    ...block,
-                    src: this.readValue(event),
-                  });
+                @change=${(event: CustomEvent) => {
+                  const detail = event.detail as { src: string };
+                  this.updateBlock(index, { ...block, src: detail.src });
                 }}
-              ></conexia-input>
+              ></conexia-ticket-image-block>
             `
           : nothing}
         ${block.kind === "cut"
@@ -978,17 +687,14 @@ export class ConexiaTicketTemplate extends LitElement {
           : nothing}
         ${block.kind === "qr"
           ? html`
-              <conexia-input
-                label="Contenido QR"
-                .value=${block.qrContent}
+              <conexia-ticket-qr-block
+                .value=${{ qrContent: block.qrContent }}
                 ?disabled=${this.disabled}
-                @input=${(event: Event) => {
-                  this.updateBlock(index, {
-                    ...block,
-                    qrContent: this.readValue(event),
-                  });
+                @change=${(event: CustomEvent) => {
+                  const detail = event.detail as { qrContent: string };
+                  this.updateBlock(index, { ...block, qrContent: detail.qrContent });
                 }}
-              ></conexia-input>
+              ></conexia-ticket-qr-block>
             `
           : nothing}
         ${block.kind === "table" ? this.renderTableEditor(block) : nothing}
@@ -1000,7 +706,7 @@ export class ConexiaTicketTemplate extends LitElement {
     return html`
       <conexia-card style="width: 100%; max-width: 1440px; margin: 0 auto;">
         <div slot="header" class="header">
-          <strong>Plantilla de ticket</strong>
+          <strong>Plantilla</strong>
           <div class="table-actions">
             <conexia-toggle
               label="Mostrar vista previa"
