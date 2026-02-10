@@ -107,7 +107,6 @@ const blockKinds: { value: BlockKind; label: string }[] = [
   { value: "cut", label: "Corte" },
   { value: "openDrawer", label: "Abrir caja" },
   { value: "cut", label: "Corte de caja" },
-  { value: "openDrawer", label: "Abrir caja" },
 ];
 
 @customElement("conexia-ticket-template")
@@ -797,42 +796,6 @@ export class ConexiaTicketTemplate extends LitElement {
               );
             }}
           ></conexia-toggle>
-          <conexia-toggle
-            label="Linea de cierre"
-            ?checked=${block.footerLine}
-            @change=${(event: Event) => {
-              this.updateTableConfig(
-                block,
-                "footerLine",
-                this.readChecked(event),
-              );
-            }}
-          ></conexia-toggle>
-        </div>
-        <div class="row">
-          <conexia-input
-            label="Caracter de linea"
-            .value=${block.lineChar}
-            @input=${(event: Event) => {
-              this.updateTableConfig(
-                block,
-                "lineChar",
-                this.readValue(event) || "-",
-              );
-            }}
-          ></conexia-input>
-          <conexia-input
-            label="Espaciado de filas"
-            .value=${String(block.rowSpacing)}
-            @input=${(event: Event) => {
-              const value = Number(this.readValue(event) || "1");
-              this.updateTableConfig(
-                block,
-                "rowSpacing",
-                Number.isNaN(value) ? 1 : value,
-              );
-            }}
-          ></conexia-input>
         </div>
         <div class="table-actions">
           <conexia-button
@@ -841,13 +804,6 @@ export class ConexiaTicketTemplate extends LitElement {
             @click=${() => this.addTableColumn(block)}
           >
             Agregar columna
-          </conexia-button>
-          <conexia-button
-            size="sm"
-            variant="secondary"
-            @click=${() => this.addTableRow(block)}
-          >
-            Agregar fila
           </conexia-button>
         </div>
         <div class="table-grid">
@@ -863,6 +819,7 @@ export class ConexiaTicketTemplate extends LitElement {
                 ></conexia-input>
                 ${this.renderAlignSelect(cell.align ?? "left", (align) =>
                   this.updateTableHeaderAlign(block, index, align),
+                  "Alineacion",
                 )}
                 <conexia-input
                   label="Ancho"
@@ -883,52 +840,6 @@ export class ConexiaTicketTemplate extends LitElement {
                 >
                   Quitar
                 </conexia-button>
-              </div>
-            `,
-          )}
-        </div>
-        <div class="table-grid">
-          ${block.rows.map(
-            (row, rowIndex) => html`
-              <div class="block">
-                <div class="row">
-                  <conexia-label tone="muted"
-                    >Fila ${rowIndex + 1}</conexia-label
-                  >
-                  <conexia-button
-                    size="sm"
-                    variant="ghost"
-                    @click=${() => this.removeTableRow(block, rowIndex)}
-                  >
-                    Quitar fila
-                  </conexia-button>
-                </div>
-                ${row.map(
-                  (cell, cellIndex) => html`
-                    <div class="row">
-                      <conexia-input
-                        label="Celda ${cellIndex + 1}"
-                        .value=${cell.text}
-                        @input=${(event: Event) => {
-                          this.updateTableCell(
-                            block,
-                            rowIndex,
-                            cellIndex,
-                            this.readValue(event),
-                          );
-                        }}
-                      ></conexia-input>
-                      ${this.renderAlignSelect(cell.align ?? "left", (align) =>
-                        this.updateTableCellAlign(
-                          block,
-                          rowIndex,
-                          cellIndex,
-                          align,
-                        ),
-                      )}
-                    </div>
-                  `,
-                )}
               </div>
             `,
           )}
